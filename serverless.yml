@@ -10,6 +10,7 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
+        - dynamodb:DescribeTable
         - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:GetItem
@@ -26,6 +27,21 @@ functions:
           path: todos
           method: post
           cors: true
+          documentation:
+            summary: "create a new todo"
+            requestBody:
+              description: "body containing 'text' property for the todo"
+            requestModels:
+                "application/json": "todoCreateRequest"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "an empty response"
+              -
+                statusCode: "502"
+                responseModels:
+                  "application/json": "awsError"
 
   list:
     handler: todos/list.list
@@ -34,6 +50,19 @@ functions:
           path: todos
           method: get
           cors: true
+          documentation:
+            summary: "list all todos"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "a list of todo objects"
+                responseModels:
+                  "application/json": "todoList"
+              -
+                statusCode: "502"
+                responseModels:
+                  "application/json": "awsError"
 
   get:
     handler: todos/get.get
@@ -42,6 +71,25 @@ functions:
           path: todos/{id}
           method: get
           cors: true
+          documentation:
+            summary: "get a todo by its id"
+            pathParams:
+              -
+                name: "id"
+                required: true
+                description: "the id of the todo to get"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "a todo object"
+                responseModels:
+                  "application/json": "todo"
+              -
+                statusCode: "502"
+                responseModels:
+                  "application/json": "awsError"
+
 
   update:
     handler: todos/update.update
@@ -50,6 +98,25 @@ functions:
           path: todos/{id}
           method: put
           cors: true
+          documentation:
+            summary: "update a todo by its id"
+            requestBody:
+              description: "body containing 'checked' and 'text' properties for the todo"
+            pathParams:
+              -
+                name: "id"
+                description: "the id of the todo to update"
+            requestModels:
+                "application/json": "todoUpdateRequest"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "an empty response"
+              -
+                statusCode: "502"
+                responseModels:
+                  "application/json": "awsError"
 
   delete:
     handler: todos/delete.delete
@@ -58,6 +125,21 @@ functions:
           path: todos/{id}
           method: delete
           cors: true
+          documentation:
+            summary: "delete a todo by its id"
+            pathParams:
+              -
+                name: "id"
+                description: "the id of the todo to delete"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "an empty response"
+              -
+                statusCode: "502"
+                responseModels:
+                  "application/json": "awsError"
 
 resources:
   Resources:
@@ -77,3 +159,91 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
+custom:
+  documentation:
+    version: '1'
+    summary: 'Todo API'
+    description: 'A todo API documented with OpenAPI specification'
+    resources:
+      -
+        path: "todos"
+        description: "Path used for creating and listing todos"
+      -
+        path: "todos/{id}"
+        description: "Path used for getting, updating, and deleting todos"
+    models:
+      -
+        name: "todo"
+        description: "a todo object"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            text:
+              type: string
+              format: string
+            checked:
+              type: boolean
+            createdAt:
+              type: number
+            updatedAt:
+              type: number
+          required:
+            - id
+            - checked
+            - text
+            - createdAt
+            - updatedAt
+      -
+        name: "todoCreateRequest"
+        description: "a todo create request model"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            text:
+              type: string
+              format: string
+          required:
+            - text
+      -
+        name: "todoUpdateRequest"
+        description: "a todo update request model"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            text:
+              type: string
+              format: string
+            checked:
+              type: boolean
+          required:
+            - text
+            - checked
+      -
+        name: "todoList"
+        description: "a list of todo objects"
+        contentType: "application/json"
+        schema:
+          type: array
+          items:
+            $ref: "https://apigateway.amazonaws.com/restapis/wjaz6l7593/models/todo"
+      -
+          name: "awsError"
+          description: "an aws internal server error, usually with status code 502 (bad gateway)"
+          contentType: "application/json"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+
+plugins:
+  - serverless-aws-documentation
