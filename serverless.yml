@@ -105,6 +105,7 @@ functions:
             pathParams:
               -
                 name: "id"
+                required: true
                 description: "the id of the todo to update"
             requestModels:
                 "application/json": "todoUpdateRequest"
@@ -130,6 +131,7 @@ functions:
             pathParams:
               -
                 name: "id"
+                required: true
                 description: "the id of the todo to delete"
             methodResponses:
               -
