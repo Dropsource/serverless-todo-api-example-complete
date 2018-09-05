@@ -234,7 +234,7 @@ custom:
         schema:
           type: array
           items:
-            $ref: "https://apigateway.amazonaws.com/restapis/wjaz6l7593/models/todo"
+            $ref: "{{model: todo}}"
       -
           name: "awsError"
           description: "an aws internal server error, usually with status code 502 (bad gateway)"
